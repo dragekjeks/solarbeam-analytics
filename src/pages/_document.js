@@ -52,8 +52,6 @@ export default class MyDocument extends Document {
 
           <meta name="theme-color" content={palette.primary.main} />
 
-          {/* <link rel="apple-touch-icon" href="/apple-icon.png"></link> */}
-
           <link
             rel="apple-touch-icon"
             sizes="180x180"
@@ -76,7 +74,6 @@ export default class MyDocument extends Document {
 
           <link rel="manifest" href="/manifest.json" />
 
-      
           <link rel="shortcut icon" href="/favicon.ico" />
 
           {/* TWITTER */}
@@ -99,12 +96,8 @@ export default class MyDocument extends Document {
           />
           <meta property="og:site_name" content={process.env.APP_NAME} />
           <meta property="og:url" content={process.env.APP_URL} />
-          <meta property="og:image" content="/apple-touch-icon.png" />
-          <script
-            type="text/javascript"
-            src="https://app.intotheblock.com/widget.js"
-          />
-          {/* Global Site Tag (gtag.js) - Google Analytics */}
+          <meta property="og:image" content="/logo.png" />
+
           <script
             async
             src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
