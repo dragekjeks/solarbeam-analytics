@@ -1,7 +1,5 @@
 import {
   Box,
-  Container,
-  Drawer,
   Hidden,
   IconButton,
   AppBar as MuiAppBar,
@@ -9,14 +7,10 @@ import {
   Tooltip,
   Typography,
   useMediaQuery,
+  Button,
 } from "@material-ui/core";
-import {
-  Brightness4Outlined,
-  Brightness7Outlined,
-  CloseOutlined,
-  Menu,
-} from "@material-ui/icons";
-import React, { useState } from "react";
+import { CloseOutlined, Menu } from "@material-ui/icons";
+import React from "react";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 
 import clsx from "clsx";
@@ -24,7 +18,7 @@ import { darkModeVar } from "app/core";
 import useDetect from "../core/hooks/useDetect";
 import { useReactiveVar } from "@apollo/client";
 import { useRouter } from "next/router";
-import Image from "next/image";
+import Link from "./Link";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -107,15 +101,13 @@ export default function AppBar({
               justifyContent="space-around"
             >
               <div style={{ marginRight: 10, display: "flex" }}>
-                <img
-                  src="/logo.png"
-                  width={36}
-                  height={36}
-                />
+                <img src="/logo.png" width={36} height={36} />
               </div>
-              <Typography variant="subtitle1" color="textPrimary" noWrap>
-                Solarbeam Analytics
-              </Typography>
+              <Link underline="hover" color="textPrimary" href={"/"}>
+                <Typography variant="subtitle1" color="textPrimary" noWrap>
+                  Solarbeam Analytics
+                </Typography>
+              </Link>
             </Box>
           </Hidden>
 
@@ -133,6 +125,16 @@ export default function AppBar({
             {page.charAt(0).toUpperCase() + page.slice(1)}
           </Typography>
         </div>
+        <Tooltip title="Enter App" enterDelay={300}>
+          <Button
+            onClick={() => {
+              window.open("https://solarbeam.io", "_blank");
+            }}
+            variant="subtitle1"
+          >
+            Enter App
+          </Button>
+        </Tooltip>
         <Tooltip title="Toggle theme" enterDelay={300}>
           <IconButton
             color="default"
