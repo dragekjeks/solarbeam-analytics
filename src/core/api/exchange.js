@@ -134,10 +134,13 @@ export async function getToken(id, client = getApollo()) {
     },
   });
 
-  return await client.cache.readQuery({
+  const result = await client.cache.readQuery({
     query: tokenQuery,
     variables: { id },
   });
+
+  console.log(result);
+  return result;
 }
 
 export async function getTokens(client = getApollo()) {

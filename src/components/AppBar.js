@@ -130,7 +130,7 @@ export default function AppBar({
             onClick={() => {
               window.open("https://solarbeam.io", "_blank");
             }}
-            variant="subtitle1"
+            variant="text"
           >
             Enter App
           </Button>

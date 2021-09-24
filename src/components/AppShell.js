@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
   },
   contentShift: {
     marginLeft: 0,
-    marginRight: drawerWidth
+    marginRight: drawerWidth,
   },
 }));
 
@@ -108,7 +108,7 @@ function AppShell(props) {
         })}
       >
         <div className={classes.toolbar} />
-        <Container maxWidth="xl">{children}</Container>
+        {children && <Container maxWidth="xl">{children}</Container>}
         {/* <AppFooter /> */}
       </main>
     </div>
