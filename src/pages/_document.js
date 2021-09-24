@@ -76,8 +76,7 @@ export default class MyDocument extends Document {
 
           <link rel="manifest" href="/manifest.json" />
 
-          <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#000000" />
-
+      
           <link rel="shortcut icon" href="/favicon.ico" />
 
           {/* TWITTER */}
