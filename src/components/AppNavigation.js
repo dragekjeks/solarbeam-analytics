@@ -62,7 +62,7 @@ export default function AppNavigation() {
         <Hidden smUp implementation="css">
           <Box display="flex" alignItems="center" justifyContent="center">
             <div style={{ marginRight: 3, display: "flex", padding: 8 }}>
-              <Image layout={"fixed"} src="/logo.png" width={36} height={36} />
+              <img src="/logo.png" width={36} height={36} />
             </div>
             <Typography variant="subtitle1" color="textPrimary" noWrap>
               Solarbeam Analytics

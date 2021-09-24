@@ -107,8 +107,7 @@ export default function AppBar({
               justifyContent="space-around"
             >
               <div style={{ marginRight: 10, display: "flex" }}>
-                <Image
-                  layout={"fixed"}
+                <img
                   src="/logo.png"
                   width={36}
                   height={36}
