@@ -24,13 +24,10 @@ export async function getLatestTransactionBlock(client = getApollo()) {
       clientName: "exchange",
     },
   });
-
   return data;
 }
 
 export async function getLatestBlock(client = getApollo()) {
-  const lastestTransactionBlock = await getLatestTransactionBlock(client);
-
   const { data } = await client.query({
     query: latestBlockQuery,
     context: {
@@ -42,8 +39,6 @@ export async function getLatestBlock(client = getApollo()) {
 }
 
 export async function getOneDayBlock(client = getApollo()) {
-  const lastestTransactionBlock = await getLatestTransactionBlock(client);
-
   const date = startOfMinute(subDays(Date.now(), 1));
   const start = Math.floor(date / 1000);
   const end = Math.floor(date / 1000) + 600;
@@ -59,13 +54,7 @@ export async function getOneDayBlock(client = getApollo()) {
     },
     fetchPolicy: "network-only",
   });
-
-  let number = blocksData?.blocks[0].number;
-  if (blocksData?.blocks[0].number > lastestTransactionBlock?._meta.block.number) {
-    number = lastestTransactionBlock?._meta.block.number
-  }
-
-  return { number: Number(number) };
+  return { number: Number(blocksData?.blocks[0].number) };
 }
 
 export async function getTwoDayBlock(client = getApollo()) {
@@ -86,16 +75,10 @@ export async function getTwoDayBlock(client = getApollo()) {
     fetchPolicy: "network-only",
   });
 
-  let number = blocksData?.blocks[0].number;
-  if (blocksData?.blocks[0].number > lastestTransactionBlock?._meta.block.number) {
-    number = lastestTransactionBlock?._meta.block.number
-  }
-
-  return { number: Number(number) };
+  return { number: Number(blocksData?.blocks[0].number) };
 }
 
 export async function getSevenDayBlock(client = getApollo()) {
-  const lastestTransactionBlock = await getLatestTransactionBlock(client);
   const date = startOfMinute(subWeeks(Date.now(), 1));
   const start = Math.floor(date / 1000);
   const end = Math.floor(date / 1000) + 600;
@@ -111,13 +94,7 @@ export async function getSevenDayBlock(client = getApollo()) {
     },
     fetchPolicy: "network-only",
   });
-
-  let number = blocksData?.blocks[0].number;
-  if (blocksData?.blocks[0].number > lastestTransactionBlock?._meta.block.number) {
-    number = lastestTransactionBlock?._meta.block.number
-  }
-
-  return { number: Number(number) };
+  return { number: Number(blocksData?.blocks[0].number) };
 }
 
 export async function getAverageBlockTime(client = getApollo()) {
