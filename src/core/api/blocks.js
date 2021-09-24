@@ -60,8 +60,6 @@ export async function getOneDayBlock(client = getApollo()) {
     fetchPolicy: "network-only",
   });
 
-  console.log(lastestTransactionBlock);
-
   let number = blocksData?.blocks[0].number;
   if (blocksData?.blocks[0].number > lastestTransactionBlock?._meta.block.number) {
     number = lastestTransactionBlock?._meta.block.number

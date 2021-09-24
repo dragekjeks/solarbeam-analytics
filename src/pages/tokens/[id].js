@@ -85,7 +85,6 @@ function TokenPage() {
     variables: { id },
   });
 
-  console.log(token);
 
   const {
     data: { bundles },
