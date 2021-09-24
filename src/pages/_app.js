@@ -58,11 +58,7 @@ function MyApp({ Component, pageProps }) {
         />
       </Head>
       <ApolloProvider client={client}>
-        <ThemeProvider
-          theme={{
-            ...theme,
-          }}
-        >
+        <ThemeProvider theme={darkTheme}>
           <CssBaseline />
           <Component {...pageProps} />
         </ThemeProvider>
