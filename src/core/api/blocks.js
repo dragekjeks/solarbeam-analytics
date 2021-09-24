@@ -58,7 +58,6 @@ export async function getOneDayBlock(client = getApollo()) {
 }
 
 export async function getTwoDayBlock(client = getApollo()) {
-  const lastestTransactionBlock = await getLatestTransactionBlock(client);
   const date = startOfMinute(subDays(Date.now(), 2));
   const start = Math.floor(date / 1000);
   const end = Math.floor(date / 1000) + 600;
