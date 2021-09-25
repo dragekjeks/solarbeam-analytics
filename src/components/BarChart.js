@@ -72,8 +72,6 @@ export default function BarChart({
     }
   }
 
-  // console.log('bar', { data, length: data.length, timespan })
-
   data = data.filter((d) => timespan <= d.date);
 
   const [overlay, setOverlay] = useState({
@@ -111,8 +109,6 @@ export default function BarChart({
   if (width < 10) {
     return null;
   }
-
-  // console.log("tooltip data", tooltipData);
 
   return (
     <div style={{ position: "relative" }}>

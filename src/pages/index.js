@@ -23,6 +23,9 @@ import {
   poolsQuery,
   tokensQuery,
   useInterval,
+  ethPriceQuery,
+  oneDayEthPriceQuery,
+  sevenDayEthPriceQuery,
 } from "app/core";
 
 import Head from "next/head";
@@ -147,13 +150,13 @@ export async function getStaticProps() {
 
   await getEthPrice(client);
 
-  await getOneDayEthPrice(client);
-
-  await getSevenDayEthPrice(client);
-
   await getTokens(client);
 
   await getPairs(client);
+
+  await getOneDayEthPrice(client);
+
+  // await getSevenDayEthPrice(client);
 
   return {
     props: {

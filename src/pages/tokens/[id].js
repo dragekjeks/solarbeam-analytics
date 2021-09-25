@@ -85,7 +85,6 @@ function TokenPage() {
     variables: { id },
   });
 
-
   const {
     data: { bundles },
   } = useQuery(ethPriceQuery, {
@@ -93,6 +92,7 @@ function TokenPage() {
   });
 
   const { data: oneDayEthPriceData } = useQuery(oneDayEthPriceQuery);
+
 
   useInterval(async () => {
     await getToken(id);

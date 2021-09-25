@@ -139,7 +139,6 @@ export async function getToken(id, client = getApollo()) {
     variables: { id },
   });
 
-  console.log(result);
   return result;
 }
 

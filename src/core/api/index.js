@@ -12,6 +12,7 @@ import {
   pairsTimeTravelQuery,
   sevenDayEthPriceQuery,
   tokenPairsQuery,
+  sevenDayEthPriceTimeTravelQuery,
 } from "app/core";
 
 export * from "./bar";
@@ -70,6 +71,7 @@ export async function getOneDayEthPrice(client = getApollo()) {
   });
 
   await client.cache.writeQuery({
+    overwrite: true,
     query: oneDayEthPriceQuery,
     data: {
       ethPrice: bundles[0]?.ethPrice,
@@ -83,7 +85,7 @@ export async function getSevenDayEthPrice(client = getApollo()) {
   const {
     data: { bundles },
   } = await client.query({
-    query: ethPriceTimeTravelQuery,
+    query: sevenDayEthPriceTimeTravelQuery,
     variables: {
       block,
     },
@@ -91,6 +93,7 @@ export async function getSevenDayEthPrice(client = getApollo()) {
   });
 
   await client.cache.writeQuery({
+    overwrite: true,
     query: sevenDayEthPriceQuery,
     data: {
       ethPrice: bundles[0]?.ethPrice,
@@ -134,8 +137,6 @@ export async function getPair(id, client = getApollo()) {
     },
     fetchPolicy: "no-cache",
   });
-
-  // console.log({ oneDayPair, twoDayPair });
 
   await client.cache.writeQuery({
     query: pairQuery,

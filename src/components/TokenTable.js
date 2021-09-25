@@ -30,17 +30,17 @@ export default function TokenTable({ tokens, title }) {
   });
 
   const { data: oneDayEthPriceData } = useQuery(oneDayEthPriceQuery);
-
+  
   const { data: sevenDayEthPriceData } = useQuery(sevenDayEthPriceQuery);
-
 
   const rows = tokens
     .filter(({ id }) => {
       return !TOKEN_DENY.includes(id);
     })
     .map((token) => {
+   
       const price =
-        parseFloat(token.derivedETH) * parseFloat(bundles[0]?.ethPrice);
+        parseFloat(token?.derivedETH) * parseFloat(bundles[0].ethPrice);
 
       const priceYesterday =
         parseFloat(token.oneDay?.derivedETH) *
@@ -72,6 +72,7 @@ export default function TokenTable({ tokens, title }) {
         sevenDayPriceChange,
       };
     });
+
 
   return (
     <div className={classes.root}>
@@ -119,12 +120,12 @@ export default function TokenTable({ tokens, title }) {
             render: (row) => <Percent percent={row.priceChange} />,
             label: "24h",
           },
-          {
-            key: "sevenDayPriceChange",
-            align: "right",
-            render: (row) => <Percent percent={row.sevenDayPriceChange} />,
-            label: "7d",
-          },
+          // {
+          //   key: "sevenDayPriceChange",
+          //   align: "right",
+          //   render: (row) => <Percent percent={row.sevenDayPriceChange} />,
+          //   label: "7d",
+          // },
           // {
           //   key: "symbol",
           //   label: "Symbol",
@@ -144,9 +145,9 @@ export default function TokenTable({ tokens, title }) {
                   style={{
                     strokeWidth: 3,
                     stroke:
-                      row.sevenDayPriceChange > 0
+                      row.priceChange > 0
                         ? theme.palette.positive.main
-                        : row.sevenDayPriceChange < 0
+                        : row.priceChange < 0
                         ? theme.palette.negative.main
                         : "currentColor",
                     fill: "none",

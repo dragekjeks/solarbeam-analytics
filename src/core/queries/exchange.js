@@ -55,7 +55,7 @@ export const uniswapUserQuery = gql`
 `;
 
 export const oneDayEthPriceQuery = gql`
-  query OneDayEthPrice {
+  query oneDayEthPrice {
     ethPrice @client
   }
 `;
@@ -84,6 +84,15 @@ export const ethPriceQuery = gql`
 
 export const ethPriceTimeTravelQuery = gql`
   query ethPriceTimeTravelQuery($id: Int! = 1, $block: Block_height!) {
+    bundles(id: $id, block: $block) {
+      ...bundleFields
+    }
+  }
+  ${bundleFields}
+`;
+
+export const sevenDayEthPriceTimeTravelQuery = gql`
+  query sevenDayEthPriceTimeTravelQuery($id: Int! = 1, $block: Block_height!) {
     bundles(id: $id, block: $block) {
       ...bundleFields
     }
@@ -390,13 +399,10 @@ export const tokensQuery = gql`
   query tokensQuery($first: Int! = 1000) {
     tokens(first: $first, orderBy: tradeVolumeUSD, orderDirection: desc) {
       ...tokenFields
-      tokenDayData(first: 7, skip: 0, orderBy: date, order: asc) {
+      tokenDayData(first: 10, orderBy: date, orderDirection: desc) {
         id
         priceUSD
       }
-      # hourData(first: 168, skip: 0, orderBy: date, order: asc) {
-      #   priceUSD
-      # }
       oneDay @client
       sevenDay @client
     }
