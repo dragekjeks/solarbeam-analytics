@@ -77,6 +77,13 @@ export async function getOneDayEthPrice(client = getApollo()) {
       ethPrice: bundles[0]?.ethPrice,
     },
   });
+
+  return await client.cache.readQuery({
+    query: oneDayEthPriceQuery,
+    variables: {
+      block,
+    },
+  });
 }
 
 export async function getSevenDayEthPrice(client = getApollo()) {
@@ -96,7 +103,14 @@ export async function getSevenDayEthPrice(client = getApollo()) {
     overwrite: true,
     query: sevenDayEthPriceQuery,
     data: {
-      ethPrice: bundles[0]?.ethPrice,
+      sevenDayPrice: bundles[0]?.ethPrice,
+    },
+  });
+
+  return await client.cache.readQuery({
+    query: sevenDayEthPriceQuery,
+    variables: {
+      block,
     },
   });
 }

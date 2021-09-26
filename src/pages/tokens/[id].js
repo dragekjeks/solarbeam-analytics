@@ -17,6 +17,7 @@ import {
   ethPriceQuery,
   getApollo,
   getOneDayBlock,
+  getEthPrice,
   getOneDayEthPrice,
   getToken,
   getTokenPairs,
@@ -33,8 +34,10 @@ import {
 import Head from "next/head";
 import { ParentSize } from "@visx/responsive";
 import { makeStyles } from "@material-ui/core/styles";
-import { useQuery } from "@apollo/client";
+import { useQuery, useLazyQuery } from "@apollo/client";
 import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@material-ui/lab";
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -79,51 +82,135 @@ function TokenPage() {
 
   const id = router.query.id.toLowerCase();
 
-  const {
-    data: { token },
-  } = useQuery(tokenQuery, {
+  const [token, setToken] = useState(null);
+  const [pairs0, setPairs0] = useState([]);
+  const [pairs1, setPairs1] = useState([]);
+
+  const [
+    queryToken,
+    { called: tokenCalled, loading: tokenLoading, data: tokenResult },
+  ] = useLazyQuery(tokenQuery, {
     variables: { id },
   });
 
-  const {
-    data: { bundles },
-  } = useQuery(ethPriceQuery, {
-    pollInterval: 60000,
-  });
+  const [queryEthPrice, { data: ethPriceResult }] = useLazyQuery(
+    ethPriceQuery,
+    {
+      pollInterval: 60000,
+    }
+  );
 
-  const { data: oneDayEthPriceData } = useQuery(oneDayEthPriceQuery);
+  const [queryOneDayEthPrice, { data: oneDayEthPriceResult }] = useLazyQuery(
+    oneDayEthPriceQuery,
+    {
+      pollInterval: 60000,
+    }
+  );
 
-
-  useInterval(async () => {
-    await getToken(id);
-    await getOneDayEthPrice();
-  }, 60000);
-
-  const {
-    data: { tokenDayDatas },
-  } = useQuery(tokenDayDatasQuery, {
+  const [
+    queryTokenDayDatas,
+    {
+      called: tokenDayCalled,
+      loading: tokenDayLoading,
+      data: tokenDayDatasResult,
+    },
+  ] = useLazyQuery(tokenDayDatasQuery, {
     variables: {
       tokens: [id],
     },
     pollInterval: 60000,
   });
 
-  const {
-    data: { pairs0, pairs1 },
-  } = useQuery(tokenPairsQuery, {
-    variables: { id },
+  const [
+    queryTokenPairs,
+    {
+      called: tokenPairsCalled,
+      loading: tokenPairsLoading,
+      data: tokenPairsResult,
+    },
+  ] = useLazyQuery(tokenPairsQuery, {
+    variables: {
+      tokens: [id],
+    },
+    pollInterval: 60000,
   });
 
   const pairs = [...pairs0, ...pairs1];
 
-  const { data: transactions } = useQuery(transactionsQuery, {
+  const [
+    queryTransactions,
+    {
+      called: transactionsCalled,
+      loading: transactionsLoading,
+      data: transactionsResult,
+    },
+  ] = useLazyQuery(transactionsQuery, {
     variables: {
       pairAddresses: pairs.map((pair) => pair.id).sort(),
     },
     pollInterval: 60000,
   });
 
-  const chartDatas = tokenDayDatas.reduce(
+  const queryAll = async () => {
+    const client = getApollo();
+
+    await getEthPrice();
+    await getOneDayEthPrice(client);
+    await getToken(id);
+
+    queryToken();
+    queryEthPrice();
+    queryOneDayEthPrice();
+
+    await client.query({
+      query: tokenDayDatasQuery,
+      variables: {
+        tokens: [id],
+      },
+    });
+
+    queryTokenDayDatas();
+
+    const pairsData = await getTokenPairs(id);
+
+    const pairAddresses = [
+      ...pairsData.pairs0.map((pair) => pair.id),
+      ...pairsData.pairs1.map((pair) => pair.id),
+    ].sort();
+
+    queryTokenPairs();
+
+    setPairs0(pairsData.pairs0);
+    setPairs1(pairsData.pairs1);
+
+    await client.query({
+      query: transactionsQuery,
+      variables: {
+        pairAddresses,
+      },
+    });
+
+    queryTransactions();
+  };
+
+  useInterval(async () => {
+    await queryAll();
+  }, 60000);
+
+  useEffect(() => {
+    queryAll();
+  }, [id]);
+
+  useEffect(() => {
+    if (tokenResult) {
+      setToken(tokenResult.token);
+    }
+  }, [tokenResult]);
+
+  const chartDatas = (
+    (tokenDayDatasResult && tokenDayDatasResult.tokenDayDatas) ||
+    []
+  ).reduce(
     (previousValue, currentValue) => {
       previousValue["liquidity"].unshift({
         date: currentValue.date,
@@ -141,26 +228,25 @@ function TokenPage() {
   const totalLiquidityUSD =
     parseFloat(token?.totalLiquidity) *
     parseFloat(token?.derivedETH) *
-    parseFloat(bundles[0].ethPrice);
+    parseFloat(ethPriceResult?.bundles[0].ethPrice);
 
   const totalLiquidityUSDYesterday =
-    parseFloat(token.oneDay?.liquidity) *
-    parseFloat(token.oneDay?.derivedETH) *
-    parseFloat(oneDayEthPriceData?.ethPrice);
+    parseFloat(token?.oneDay?.liquidity) *
+    parseFloat(token?.oneDay?.derivedETH) *
+    parseFloat(oneDayEthPriceResult?.ethPrice);
 
-  const price = parseFloat(token?.derivedETH) * parseFloat(bundles[0].ethPrice);
+  const price =
+    parseFloat(token?.derivedETH) *
+    parseFloat(ethPriceResult?.bundles[0].ethPrice);
 
   const priceYesterday =
-    parseFloat(token.oneDay?.derivedETH) *
-    parseFloat(oneDayEthPriceData?.ethPrice);
+    parseFloat(token?.oneDay?.derivedETH) *
+    parseFloat(oneDayEthPriceResult?.ethPrice);
 
   const priceChange = ((price - priceYesterday) / priceYesterday) * 100;
 
   const volume = token?.tradeVolumeUSD - token?.oneDay?.volumeUSD;
   const volumeYesterday = token?.oneDay?.volumeUSD - token?.twoDay?.volumeUSD;
-
-  const txCount = token?.txCount - token?.oneDay?.txCount;
-  const txCountYesterday = token?.oneDay?.txCount - token?.twoDay?.txCount;
 
   const fees = volume * 0.0025;
   const feesYesterday = volumeYesterday * 0.0025;
@@ -169,8 +255,9 @@ function TokenPage() {
     <AppShell>
       <Head>
         <title>
-          {currencyFormatter.format(price || 0)} | {token.symbol} | Solarbeam
-          Analytics
+          {token &&
+            `${currencyFormatter.format(price || 0)} | ${token?.symbol} | `}
+          Solarbeam Analytics
         </title>
       </Head>
       <PageHeader>
@@ -182,28 +269,41 @@ function TokenPage() {
         >
           <Grid item xs={12} sm="auto" className={classes.title}>
             <Box display="flex" alignItems="center">
-              <TokenIcon id={token.id} />
+              <TokenIcon id={token?.id} />
               <Typography variant="h5" component="h1" noWrap>
-                {token.name} ({token.symbol}){" "}
+                {token ? (
+                  <>
+                    {token?.name} ({token?.symbol}){" "}
+                  </>
+                ) : (
+                  <Skeleton
+                    variant="text"
+                    width={200}
+                    height={40}
+                    style={{ marginLeft: 15 }}
+                  />
+                )}
               </Typography>
             </Box>
-            <Box display="flex" alignItems="center" className={classes.price}>
-              <Typography variant="h6" component="div">
-                {currencyFormatter.format(price || 0)}
-              </Typography>
-              <Percent percent={priceChange} ml={1} />
-            </Box>
+            {token && (
+              <Box display="flex" alignItems="center" className={classes.price}>
+                <Typography variant="h6" component="div">
+                  {currencyFormatter.format(price || 0)}
+                </Typography>
+                <Percent percent={priceChange} ml={1} />
+              </Box>
+            )}
           </Grid>
           <Grid item xs={12} sm="auto" className={classes.links}>
             <Link
-              href={`https://solarbeam.io/#/add/${token.id}/ETH`}
+              href={`https://solarbeam.io/#/add/${token?.id}/ETH`}
               target="_blank"
               variant="body1"
             >
               Add Liquidity
             </Link>
             <Link
-              href={`https://solarbeam.io/#/swap?inputCurrency=${token.id}`}
+              href={`https://solarbeam.io/#/swap?inputCurrency=${token?.id}`}
               target="_blank"
               variant="body1"
             >
@@ -224,6 +324,7 @@ function TokenPage() {
                 <AreaChart
                   title="Liquidity"
                   data={chartDatas.liquidity}
+                  loading={!tokenDayCalled || tokenDayLoading}
                   width={width}
                   height={height}
                   margin={{ top: 125, right: 0, bottom: 0, left: 0 }}
@@ -244,6 +345,7 @@ function TokenPage() {
                 <BarChart
                   title="Volume"
                   data={chartDatas.volume}
+                  loading={!tokenDayCalled || tokenDayLoading}
                   width={width}
                   height={height}
                   margin={{ top: 125, right: 0, bottom: 0, left: 0 }}
@@ -257,6 +359,7 @@ function TokenPage() {
 
         <Grid item xs={12} md={4}>
           <KPI
+            loading={!token}
             title="Liquidity (24h)"
             value={currencyFormatter.format(totalLiquidityUSD || 0)}
             difference={
@@ -268,6 +371,7 @@ function TokenPage() {
         </Grid>
         <Grid item xs={12} md={4}>
           <KPI
+            loading={!token}
             title="Volume (24h)"
             value={currencyFormatter.format(volume || 0)}
             difference={((volume - volumeYesterday) / volumeYesterday) * 100}
@@ -275,6 +379,7 @@ function TokenPage() {
         </Grid>
         <Grid item xs={12} md={4}>
           <KPI
+            loading={!token}
             title="Fees (24h)"
             value={currencyFormatter.format(fees)}
             difference={((fees - feesYesterday) / feesYesterday) * 100}
@@ -284,6 +389,7 @@ function TokenPage() {
 
       <Box my={4}>
         <BasicTable
+          loading={!token}
           title="Information"
           headCells={[
             { key: "name", label: "Name" },
@@ -292,11 +398,11 @@ function TokenPage() {
             { key: "blockscout", label: "Blockscout", align: "right" },
           ]}
           bodyCells={[
-            token.name,
-            token.symbol,
-            token.id,
+            token?.name,
+            token?.symbol,
+            token?.id,
             <Link
-              href={`https://blockscout.moonriver.moonbeam.network/address/${token.id}`}
+              href={`https://blockscout.moonriver.moonbeam.network/address/${token?.id}`}
             >
               View
             </Link>,
@@ -304,68 +410,32 @@ function TokenPage() {
         />
       </Box>
 
-      <PairTable title="Pairs" pairs={pairs} />
-
-      <Transactions transactions={transactions} txCount={token.txCount} />
+      <PairTable
+        loading={!tokenPairsCalled || tokenPairsLoading}
+        title="Pairs"
+        pairs={pairs}
+      />
+      <Transactions
+        loading={!transactionsCalled || transactionsLoading}
+        transactions={transactionsResult}
+        txCount={token?.txCount}
+      />
     </AppShell>
   );
 }
 
 export async function getStaticProps({ params }) {
-  const client = getApollo();
-
   const id = params.id.toLowerCase();
-
-  await client.query({
-    query: ethPriceQuery,
-  });
-
-  await getToken(id, client);
-
-  await client.query({
-    query: tokenDayDatasQuery,
-    variables: {
-      tokens: [id],
-    },
-  });
-
-  const { pairs0, pairs1 } = await getTokenPairs(id, client);
-
-  const pairAddresses = [
-    ...pairs0.map((pair) => pair.id),
-    ...pairs1.map((pair) => pair.id),
-  ].sort();
-
-  // Transactions
-  await client.query({
-    query: transactionsQuery,
-    variables: {
-      pairAddresses,
-    },
-  });
-
-  await getOneDayEthPrice(client);
 
   return {
     props: {
-      initialApolloState: client.cache.extract(),
+      id,
     },
     revalidate: 1,
   };
 }
 
 export async function getStaticPaths() {
-  // Call an external API endpoint to get posts
-  // const apollo = getApollo();
-
-  // const { data } = await apollo.query({
-  //   query: tokenIdsQuery,
-  // });
-
-  // const paths = data.tokens.map(({ id }) => ({
-  //   params: { id },
-  // }));
-
   return { paths: [], fallback: true };
 }
 

@@ -2,7 +2,7 @@ import { AreaClosed, Bar } from "@visx/shape";
 import { Tooltip, defaultStyles, withTooltip } from "@visx/tooltip";
 import { currencyFormatter, oneMonth, oneWeek } from "app/core";
 import { scaleLinear, scaleTime } from "@visx/scale";
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 
 import ChartOverlay from "./ChartOverlay";
 import { LinearGradient } from "@visx/gradient";
@@ -12,6 +12,7 @@ import { deepPurple } from "@material-ui/core/colors";
 import { localPoint } from "@visx/event";
 import millify from "millify";
 import { timeFormat } from "d3-time-format";
+import { Box, CircularProgress } from "@material-ui/core";
 
 const tooltipStyles = {
   ...defaultStyles,
@@ -29,6 +30,7 @@ const formatDate = timeFormat("%b %d, '%y");
 
 function AreaChart({
   data,
+  loading = false,
   tooltipDisabled = false,
   overlayEnabled = false,
   title = "",
@@ -59,13 +61,21 @@ function AreaChart({
     }
   }
 
-  data = data.filter((d) => timespan <= d.date);
+  data = data ? data.filter((d) => timespan <= d.date) : [];
 
   const [overlay, setOverlay] = useState({
     title,
     value: currencyFormatter.format(data[data.length - 1]?.value),
     date: data[data.length - 1]?.date,
   });
+
+  useEffect(() => {
+    setOverlay({
+      title,
+      value: currencyFormatter.format(data[data.length - 1]?.value),
+      date: data[data.length - 1]?.date,
+    });
+  }, [data.length]);
 
   // Max
   const xMax = width - margin.left - margin.right;
@@ -131,88 +141,112 @@ function AreaChart({
   return (
     <div style={{ position: "relative" }}>
       {overlayEnabled && (
-        <ChartOverlay overlay={overlay} onTimespanChange={onTimespanChange} />
+        <ChartOverlay
+          loading={loading}
+          overlay={overlay}
+          onTimespanChange={onTimespanChange}
+        />
       )}
-      <svg width={width} height={height}>
-        <LinearGradient id="teal" from="#8800ec" to="#ffc000" />
-        <rect x={0} y={0} width={width} height={height} fill="transparent" />
-
-        <Group top={margin.top} left={margin.left}>
-          <AreaClosed
-            data={data}
-            x={(d) => xScale(getDate(d))}
-            y={(d) => yScale(getValue(d))}
-            yScale={yScale}
-            fill="url(#teal)"
-          />
-        </Group>
-        <Bar
-          x={0}
-          y={0}
+      {loading ? (
+        <Box
+          display="flex"
           width={width}
           height={height}
-          fill="transparent"
-          rx={14}
-          onTouchStart={handleTooltip}
-          onTouchMove={handleTooltip}
-          onMouseMove={handleTooltip}
-          onMouseLeave={() => {
-            hideTooltip();
-            setOverlay({
-              ...overlay,
-              value: currencyFormatter.format(data[data.length - 1]?.value),
-              date: data[data.length - 1]?.date,
-            });
-          }}
-        />
+          alignItems="center"
+          justifyContent="center"
+        >
+          <CircularProgress />
+        </Box>
+      ) : (
+        <>
+          <svg width={width} height={height}>
+            <LinearGradient id="teal" from="#8800ec" to="#ffc000" />
+            <rect
+              x={0}
+              y={0}
+              width={width}
+              height={height}
+              fill="transparent"
+            />
 
-        {tooltipData && (
-          <Group top={margin.top} left={margin.left}>
-            <circle
-              cx={tooltipLeft}
-              cy={tooltipTop + 1}
-              r={4}
-              fill="black"
-              fillOpacity={0.1}
-              stroke="black"
-              strokeOpacity={0.1}
-              strokeWidth={2}
-              pointerEvents="none"
+            <Group top={margin.top} left={margin.left}>
+              <AreaClosed
+                data={data}
+                x={(d) => xScale(getDate(d))}
+                y={(d) => yScale(getValue(d))}
+                yScale={yScale}
+                fill="url(#teal)"
+              />
+            </Group>
+            <Bar
+              x={0}
+              y={0}
+              width={width}
+              height={height}
+              fill="transparent"
+              rx={14}
+              onTouchStart={handleTooltip}
+              onTouchMove={handleTooltip}
+              onMouseMove={handleTooltip}
+              onMouseLeave={() => {
+                hideTooltip();
+                setOverlay({
+                  ...overlay,
+                  value: currencyFormatter.format(data[data.length - 1]?.value),
+                  date: data[data.length - 1]?.date,
+                });
+              }}
             />
-            <circle
-              cx={tooltipLeft}
-              cy={tooltipTop}
-              r={4}
-              fill={deepPurple[400]}
-              stroke="white"
-              strokeWidth={2}
-              pointerEvents="none"
-            />
-          </Group>
-        )}
-      </svg>
-      {!tooltipDisabled && tooltipData && (
-        <div>
-          <Tooltip
-            top={margin.top + tooltipTop - 12}
-            left={tooltipLeft + 12}
-            style={tooltipStyles}
-          >
-            {`$${millify(getValue(tooltipData))}`}
-          </Tooltip>
-          <Tooltip
-            top={yMax + margin.top - 14}
-            left={tooltipLeft}
-            style={{
-              ...defaultStyles,
-              minWidth: 90,
-              textAlign: "center",
-              transform: "translateX(-50%)",
-            }}
-          >
-            {formatDate(getDate(tooltipData))}
-          </Tooltip>
-        </div>
+
+            {tooltipData && (
+              <Group top={margin.top} left={margin.left}>
+                <circle
+                  cx={tooltipLeft}
+                  cy={tooltipTop + 1}
+                  r={4}
+                  fill="black"
+                  fillOpacity={0.1}
+                  stroke="black"
+                  strokeOpacity={0.1}
+                  strokeWidth={2}
+                  pointerEvents="none"
+                />
+                <circle
+                  cx={tooltipLeft}
+                  cy={tooltipTop}
+                  r={4}
+                  fill={deepPurple[400]}
+                  stroke="white"
+                  strokeWidth={2}
+                  pointerEvents="none"
+                />
+              </Group>
+            )}
+          </svg>
+          {!tooltipDisabled && tooltipData && (
+            <div>
+              <Tooltip
+                top={margin.top + tooltipTop - 12}
+                left={tooltipLeft + 12}
+                style={tooltipStyles}
+              >
+                {`$${millify(getValue(tooltipData))}`}
+              </Tooltip>
+              <Tooltip
+                top={yMax + margin.top - 14}
+                left={tooltipLeft}
+                style={{
+                  ...defaultStyles,
+                  minWidth: 90,
+                  textAlign: "center",
+                  transform: "translateX(-50%)",
+                }}
+              >
+                {formatDate(getDate(tooltipData))}
+              </Tooltip>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

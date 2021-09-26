@@ -46,7 +46,7 @@ function AppShell(props) {
   const classes = useStyles();
   const theme = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
 
   const matches = useMediaQuery(theme.breakpoints.up("sm"));
 
@@ -109,7 +109,7 @@ function AppShell(props) {
       >
         <div className={classes.toolbar} />
         {children && <Container maxWidth="xl">{children}</Container>}
-        {/* <AppFooter /> */}
+        <AppFooter />
       </main>
     </div>
   );

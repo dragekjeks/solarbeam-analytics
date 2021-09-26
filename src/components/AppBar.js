@@ -135,7 +135,7 @@ export default function AppBar({
             Enter App
           </Button>
         </Tooltip>
-        <Tooltip title="Toggle theme" enterDelay={300}>
+        <Tooltip title="Open Drawer" enterDelay={300}>
           <IconButton
             color="default"
             aria-label="open drawer"

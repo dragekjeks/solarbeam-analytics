@@ -7,6 +7,8 @@ import {
   TablePagination,
   TableRow,
   Typography,
+  Box,
+  CircularProgress,
 } from "@material-ui/core";
 
 import React from "react";
@@ -80,6 +82,7 @@ export default function SortableTable({
   columns,
   rows,
   title,
+  loading = false,
   ...props
 }) {
   const classes = useStyles();
@@ -125,38 +128,55 @@ export default function SortableTable({
             rowCount={rows.length}
           />
           <TableBody>
-            {stableSort(rows, getComparator(order, orderBy))
-              // .filter((row) => {
-              //   return !TOKEN_DENY.includes(row.id);
-              // })
-              .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
-              .map((row, index) => {
-                return (
-                  <TableRow key={row.id}>
-                    {columns.map((column, i) => {
-                      return (
-                        <TableCell
-                          key={i}
-                          {...(i === 0
-                            ? { component: "th", scope: "row" }
-                            : {})}
-                          align={column.align || "left"}
-                          // variant="body"
-                        >
-                          {typeof column.render === "function"
-                            ? column.render(row, index)
-                            : row[column.key]}
-                        </TableCell>
-                      );
-                    })}
-                  </TableRow>
-                );
-              })}
-            {/* {emptyRows > 0 && (
+            {loading ? (
+              <TableRow key={1}>
+                <TableCell align="center" colSpan={columns.length}>
+                  <Box
+                    display="flex"
+                    height={200}
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <CircularProgress />
+                  </Box>
+                </TableCell>
+              </TableRow>
+            ) : (
+              <>
+                {stableSort(rows, getComparator(order, orderBy))
+                  // .filter((row) => {
+                  //   return !TOKEN_DENY.includes(row.id);
+                  // })
+                  .slice(page * rowsPerPage, page * rowsPerPage + rowsPerPage)
+                  .map((row, index) => {
+                    return (
+                      <TableRow key={row.id}>
+                        {columns.map((column, i) => {
+                          return (
+                            <TableCell
+                              key={i}
+                              {...(i === 0
+                                ? { component: "th", scope: "row" }
+                                : {})}
+                              align={column.align || "left"}
+                              // variant="body"
+                            >
+                              {typeof column.render === "function"
+                                ? column.render(row, index)
+                                : row[column.key]}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })}
+                {/* {emptyRows > 0 && (
               <TableRow style={{ height: 53 * emptyRows }}>
                 <TableCell colSpan={6} />
               </TableRow>
             )} */}
+              </>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

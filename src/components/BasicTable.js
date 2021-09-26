@@ -7,9 +7,17 @@ import {
   TableHead,
   TableRow,
   Typography,
+  Box,
+  CircularProgress,
 } from "@material-ui/core";
 
-export default function BasicTable({ title, headCells, bodyCells, style }) {
+export default function BasicTable({
+  title,
+  headCells,
+  bodyCells,
+  style,
+  loading = false,
+}) {
   return (
     <div>
       {title && (
@@ -33,18 +41,33 @@ export default function BasicTable({ title, headCells, bodyCells, style }) {
             </TableRow>
           </TableHead>
           <TableBody>
-            <TableRow key={Date.now()}>
-              {bodyCells.map((cell, index) => (
-                <TableCell
-                  key={index}
-                  {...(index === 0 ? { component: "th", scope: "row" } : {})}
-                  align={headCells[index].align || "left"}
-                  style={{ maxWidth: headCells[index].maxWidth || "initial" }}
-                >
-                  {cell}
+            {loading ? (
+              <TableRow key={1}>
+                <TableCell align="center" colSpan={bodyCells.length}>
+                  <Box
+                    display="flex"
+                    height={200}
+                    alignItems="center"
+                    justifyContent="center"
+                  >
+                    <CircularProgress />
+                  </Box>
                 </TableCell>
-              ))}
-            </TableRow>
+              </TableRow>
+            ) : (
+              <TableRow key={Date.now()}>
+                {bodyCells.map((cell, index) => (
+                  <TableCell
+                    key={index}
+                    {...(index === 0 ? { component: "th", scope: "row" } : {})}
+                    align={headCells[index].align || "left"}
+                    style={{ maxWidth: headCells[index].maxWidth || "initial" }}
+                  >
+                    {cell}
+                  </TableCell>
+                ))}
+              </TableRow>
+            )}
           </TableBody>
         </Table>
       </TableContainer>

@@ -5,7 +5,7 @@ import { RetryLink } from "@apollo/client/link/retry";
 export const exchange = from([
   new RetryLink(),
   new HttpLink({
-    uri: "http://subgraph.solarbeam.io/subgraphs/name/solarbeam/subgraph",
+    uri: "/api/subgraph",
     shouldBatch: true,
   }),
 ]);
@@ -13,7 +13,7 @@ export const exchange = from([
 export const blocklytics = from([
   new RetryLink(),
   new HttpLink({
-    uri: "http://subgraph.solarbeam.io/subgraphs/name/solarbeam/blocklytics",
+    uri: "/api/blocklytics",
     shouldBatch: true,
   }),
 ]);

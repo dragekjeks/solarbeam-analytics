@@ -4,81 +4,146 @@ import {
   ethPriceQuery,
   oneDayEthPriceQuery,
   sevenDayEthPriceQuery,
+  tokensQuery,
+  useInterval,
+  getEthPrice,
+  getOneDayEthPrice,
+  getSevenDayEthPrice,
+  getTokens,
 } from "app/core";
 import { makeStyles, useTheme } from "@material-ui/core/styles";
 
 import Link from "./Link";
 import Percent from "./Percent";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SortableTable from "./SortableTable";
 import { TOKEN_DENY } from "app/core/constants";
 import TokenIcon from "./TokenIcon";
 import { currencyFormatter } from "app/core";
-import { useQuery } from "@apollo/client";
+import { useLazyQuery } from "@apollo/client";
 
 const useStyles = makeStyles((theme) => ({
   root: {},
 }));
 
-export default function TokenTable({ tokens, title }) {
+export default function TokenTable({ title, ...rest }) {
   const classes = useStyles();
   const theme = useTheme();
-  const {
-    data: { bundles },
-  } = useQuery(ethPriceQuery, {
-    pollInterval: 60000,
-  });
+  const [rows, setRows] = useState([]);
 
-  const { data: oneDayEthPriceData } = useQuery(oneDayEthPriceQuery);
-  
-  const { data: sevenDayEthPriceData } = useQuery(sevenDayEthPriceQuery);
+  const [
+    queryTokens,
+    { called: tokensCalled, loading: tokensLoading, data: tokensResult },
+  ] = useLazyQuery(tokensQuery);
 
-  const rows = tokens
-    .filter(({ id }) => {
-      return !TOKEN_DENY.includes(id);
-    })
-    .map((token) => {
-   
-      const price =
-        parseFloat(token?.derivedETH) * parseFloat(bundles[0].ethPrice);
+  const [queryEthPrice, { data: ethPriceResult }] = useLazyQuery(
+    ethPriceQuery,
+    {
+      pollInterval: 60000,
+    }
+  );
 
-      const priceYesterday =
-        parseFloat(token.oneDay?.derivedETH) *
-        parseFloat(oneDayEthPriceData?.ethPrice);
+  const [queryOneDayEthPrice, { data: oneDayEthPriceResult }] = useLazyQuery(
+    oneDayEthPriceQuery,
+    {
+      pollInterval: 60000,
+    }
+  );
 
-      const priceChange = ((price - priceYesterday) / priceYesterday) * 100;
-
-      const priceLastWeek =
-        parseFloat(token.sevenDay?.derivedETH) *
-        parseFloat(sevenDayEthPriceData?.ethPrice);
-
-      const sevenDayPriceChange =
-        ((price - priceLastWeek) / priceLastWeek) * 100;
-
-      const liquidityUSD =
-        parseFloat(token?.totalLiquidity) *
-        parseFloat(token?.derivedETH) *
-        parseFloat(bundles[0]?.ethPrice);
-
-      const volumeYesterday = token.tradeVolumeUSD - token.oneDay?.volumeUSD;
-
-      return {
-        ...token,
-        price,
-        priceYesterday: !Number.isNaN(priceYesterday) ? priceYesterday : 0,
-        priceChange,
-        liquidityUSD: liquidityUSD || 0,
-        volumeYesterday: !Number.isNaN(volumeYesterday) ? volumeYesterday : 0,
-        sevenDayPriceChange,
-      };
+  const [querySevenDayEthPrice, { data: sevenDayEthPriceResult }] =
+    useLazyQuery(sevenDayEthPriceQuery, {
+      pollInterval: 60000,
     });
 
+  const queryAll = async () => {
+    await getOneDayEthPrice();
+    await getSevenDayEthPrice();
+
+    await getEthPrice();
+    await getTokens();
+
+    queryEthPrice();
+    queryOneDayEthPrice();
+    querySevenDayEthPrice();
+    queryTokens();
+  };
+
+  useInterval(queryAll, 60000);
+
+  useEffect(() => {
+    queryAll();
+  }, []);
+
+  useEffect(() => {
+    if (
+      tokensResult &&
+      ethPriceResult &&
+      oneDayEthPriceResult &&
+      sevenDayEthPriceResult
+    ) {
+      const { tokens } = tokensResult;
+      const { bundles } = ethPriceResult;
+      const oneDayEthPriceData = oneDayEthPriceResult;
+      const sevenDayEthPriceData = sevenDayEthPriceResult;
+
+      const _rows = (tokens || [])
+        .filter(({ id }) => {
+          return !TOKEN_DENY.includes(id);
+        })
+        .map((token) => {
+          const price =
+            parseFloat(token?.derivedETH) * parseFloat(bundles[0].ethPrice);
+
+          const priceYesterday =
+            parseFloat(token.oneDay?.derivedETH) *
+            parseFloat(oneDayEthPriceData?.ethPrice);
+
+          const priceChange = ((price - priceYesterday) / priceYesterday) * 100;
+
+          const priceLastWeek =
+            parseFloat(token.sevenDay?.derivedETH) *
+            parseFloat(sevenDayEthPriceData?.sevenDayPrice);
+
+          const sevenDayPriceChange =
+            ((price - priceLastWeek) / priceLastWeek) * 100;
+
+          const liquidityUSD =
+            parseFloat(token?.totalLiquidity) *
+            parseFloat(token?.derivedETH) *
+            parseFloat(bundles[0]?.ethPrice);
+
+          const volumeYesterday =
+            token.tradeVolumeUSD - token.oneDay?.volumeUSD;
+
+          return {
+            ...token,
+            price,
+            priceYesterday: !Number.isNaN(priceYesterday) ? priceYesterday : 0,
+            priceChange,
+            liquidityUSD: liquidityUSD || 0,
+            volumeYesterday: !Number.isNaN(volumeYesterday)
+              ? volumeYesterday
+              : 0,
+            sevenDayPriceChange,
+          };
+        });
+      setRows(_rows);
+    }
+  }, [
+    tokensResult,
+    ethPriceResult,
+    sevenDayEthPriceResult,
+    oneDayEthPriceResult,
+  ]);
+
+  const loading = !tokensCalled || tokensLoading;
 
   return (
     <div className={classes.root}>
       <SortableTable
         title={title}
         orderBy="liquidityUSD"
+        loading={loading}
         columns={[
           {
             key: "name",
@@ -120,39 +185,23 @@ export default function TokenTable({ tokens, title }) {
             render: (row) => <Percent percent={row.priceChange} />,
             label: "24h",
           },
-          // {
-          //   key: "sevenDayPriceChange",
-          //   align: "right",
-          //   render: (row) => <Percent percent={row.sevenDayPriceChange} />,
-          //   label: "7d",
-          // },
-          // {
-          //   key: "symbol",
-          //   label: "Symbol",
-          // },
+          {
+            key: "sevenDayPriceChange",
+            align: "right",
+            render: (row) => <Percent percent={row.sevenDayPriceChange} />,
+            label: "7d",
+          },
           {
             key: "lastSevenDays",
             align: "right",
             label: "Last 7 Days",
             render: (row) => (
               <Sparklines
-                data={row.tokenDayData.map((d) => d.priceUSD)}
-                limit={7}
-                svgWidth={160}
-                svgHeight={30}
+                data={row.tokenDayData
+                  .map((d) => parseFloat(d.priceUSD))
+                  .reverse()}
               >
-                <SparklinesLine
-                  style={{
-                    strokeWidth: 3,
-                    stroke:
-                      row.priceChange > 0
-                        ? theme.palette.positive.main
-                        : row.priceChange < 0
-                        ? theme.palette.negative.main
-                        : "currentColor",
-                    fill: "none",
-                  }}
-                />
+                <SparklinesLine color="#ffc000" />
               </Sparklines>
             ),
           },

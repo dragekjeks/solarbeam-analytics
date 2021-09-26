@@ -3,10 +3,11 @@ import Link from "./Link";
 import { PAIR_DENY } from "app/core/constants";
 import PairIcon from "./PairIcon";
 import Percent from "./Percent";
-import React from "react";
+import React, { useEffect, useState } from "react";
 import SortableTable from "./SortableTable";
-import { currencyFormatter } from "app/core";
+import { currencyFormatter, pairsQuery, getPairs, useInterval } from "app/core";
 import { makeStyles } from "@material-ui/core/styles";
+import { useLazyQuery } from "@apollo/client";
 
 const useStyles = makeStyles((theme) => ({
   root: {},
@@ -14,48 +15,80 @@ const useStyles = makeStyles((theme) => ({
 
 export default function PairTable({ pairs, title, ...rest }) {
   const classes = useStyles();
+  const [rows, setRows] = useState([]);
 
-  const rows = pairs
-    .filter((row) => {
-      return !PAIR_DENY.includes(row.id);
-    })
-    .map((pair) => {
-      const volumeUSD =
-        pair?.volumeUSD === "0" ? pair?.untrackedVolumeUSD : pair?.volumeUSD;
+  const [
+    queryPairs,
+    { called: pairsCalled, loading: pairsLoading, data: pairsResult },
+  ] = useLazyQuery(pairsQuery);
 
-      const oneDayVolumeUSD =
-        pair?.oneDay?.volumeUSD === "0"
-          ? pair?.oneDay?.untrackedVolumeUSD
-          : pair?.oneDay?.volumeUSD;
-
-      const sevenDayVolumeUSD =
-        pair?.sevenDay?.volumeUSD === "0"
-          ? pair?.sevenDay?.untrackedVolumeUSD
-          : pair?.sevenDay?.volumeUSD;
-
-      const oneDayVolume = volumeUSD - oneDayVolumeUSD;
-      const oneDayFees = oneDayVolume * 0.0025;
-      const oneYearFees = (oneDayVolume * 0.0025 * 365 * 100) / pair.reserveUSD;
-      const sevenDayVolume = volumeUSD - sevenDayVolumeUSD;
-
-      return {
-        ...pair,
-        displayName: `${pair.token0.symbol.replace(
-          "WMOVR",
-          "MOVR"
-        )}/${pair.token1.symbol.replace("WMOVR", "MOVR")}`,
-        oneDayVolume: !Number.isNaN(oneDayVolume) ? oneDayVolume : 0,
-        sevenDayVolume: !Number.isNaN(sevenDayVolume) ? sevenDayVolume : 0,
-        oneDayFees: !Number.isNaN(oneDayFees) ? oneDayFees : 0,
-        oneYearFees,
-      };
+  const queryAll = async () => {
+    getPairs().then(() => {
+      queryPairs();
     });
+  };
+
+  useInterval(queryAll, 60000);
+
+  useEffect(() => {
+    queryAll();
+  }, []);
+
+  useEffect(() => {
+    if (pairsResult) {
+      const { pairs } = pairsResult;
+
+      const _rows = (pairs || [])
+        .filter((row) => {
+          return !PAIR_DENY.includes(row.id);
+        })
+        .map((pair) => {
+          const volumeUSD =
+            pair?.volumeUSD === "0"
+              ? pair?.untrackedVolumeUSD
+              : pair?.volumeUSD;
+
+          const oneDayVolumeUSD =
+            pair?.oneDay?.volumeUSD === "0"
+              ? pair?.oneDay?.untrackedVolumeUSD
+              : pair?.oneDay?.volumeUSD;
+
+          const sevenDayVolumeUSD =
+            pair?.sevenDay?.volumeUSD === "0"
+              ? pair?.sevenDay?.untrackedVolumeUSD
+              : pair?.sevenDay?.volumeUSD;
+
+          const oneDayVolume = volumeUSD - oneDayVolumeUSD;
+          const oneDayFees = oneDayVolume * 0.0025;
+          const oneYearFees =
+            (oneDayVolume * 0.0025 * 365 * 100) / pair.reserveUSD;
+          const sevenDayVolume = volumeUSD - sevenDayVolumeUSD;
+
+          return {
+            ...pair,
+            displayName: `${pair.token0.symbol.replace(
+              "WMOVR",
+              "MOVR"
+            )}/${pair.token1.symbol.replace("WMOVR", "MOVR")}`,
+            oneDayVolume: !Number.isNaN(oneDayVolume) ? oneDayVolume : 0,
+            sevenDayVolume: !Number.isNaN(sevenDayVolume) ? sevenDayVolume : 0,
+            oneDayFees: !Number.isNaN(oneDayFees) ? oneDayFees : 0,
+            oneYearFees,
+          };
+        });
+
+      setRows(_rows);
+    }
+  }, [pairsResult]);
+
+  const loading = !pairsCalled || pairsLoading;
 
   return (
     <div className={classes.root}>
       <SortableTable
         orderBy="reserveUSD"
         title={title}
+        loading={loading}
         {...rest}
         columns={[
           {

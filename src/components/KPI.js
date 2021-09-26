@@ -5,6 +5,7 @@ import React from "react";
 import clsx from "clsx";
 import { formatCurrency } from "app/core";
 import { makeStyles } from "@material-ui/styles";
+import { Skeleton } from "@material-ui/lab";
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -36,6 +37,7 @@ const formatters = {
 
 function KPI({
   className,
+  loading = false,
   title = "",
   difference = "",
   value = "",
@@ -62,15 +64,21 @@ function KPI({
           {title}
         </Typography>
         <div className={classes.content}>
-          <Typography variant="h6" color="textPrimary" noWrap>
-            {/* {!Number.isNaN(value) ? value : 0} */}
-            {formatters[format](value)}
-          </Typography>
-          <Typography variant="subtitle2" color="textSecondary" noWrap>
-            {difference && !Number.isNaN(difference) ? (
-              <Percent marginLeft={1} percent={difference} />
-            ) : null}
-          </Typography>
+          {loading ? (
+            <Skeleton variant="text" width={200} height={40} />
+          ) : (
+            <>
+              <Typography variant="h6" color="textPrimary" noWrap>
+                {/* {!Number.isNaN(value) ? value : 0} */}
+                {formatters[format](value)}
+              </Typography>
+              <Typography variant="subtitle2" color="textSecondary" noWrap>
+                {difference && !Number.isNaN(difference) ? (
+                  <Percent marginLeft={1} percent={difference} />
+                ) : null}
+              </Typography>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

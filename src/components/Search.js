@@ -1,15 +1,15 @@
-import React from 'react';
-import PropTypes from 'prop-types';
-import TextField from '@material-ui/core/TextField';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import { FixedSizeList } from 'react-window';
+import React from "react";
+import PropTypes from "prop-types";
+import TextField from "@material-ui/core/TextField";
+import Autocomplete from "@material-ui/lab/Autocomplete";
+import ListSubheader from "@material-ui/core/ListSubheader";
+import { FixedSizeList } from "react-window";
 import match from "autosuggest-highlight/match";
 import parse from "autosuggest-highlight/parse";
 import PairIcon from "./PairIcon";
 import TokenIcon from "./TokenIcon";
 import { useRouter } from "next/router";
-import { Box } from '@material-ui/core';
+import { Box } from "@material-ui/core";
 
 const LISTBOX_PADDING = 8; // px
 
@@ -31,7 +31,10 @@ const OuterElementType = React.forwardRef((props, ref) => {
 });
 
 // Adapter for react-window
-const ListboxComponent = React.forwardRef(function ListboxComponent(props, ref) {
+const ListboxComponent = React.forwardRef(function ListboxComponent(
+  props,
+  ref
+) {
   const { children, ...other } = props;
   const itemData = React.Children.toArray(children);
   const itemCount = itemData.length;
@@ -83,28 +86,31 @@ const renderGroup = (params) => [
   params.children,
 ];
 
-export default function Search({ pairs, tokens }) {
+export default function Search({ pairs, tokens, loading = false }) {
   const router = useRouter();
 
-  const options = [
-    // ...pairs.slice(offset, limit),
-    // ...tokens.slice(offset, limit),
-    ...pairs,
-    ...tokens
-  ].map((option) => {
-    return {
-      __typename: option.__typename,
-      id: option.id,
-      token0: option.token0 ? option.token0.id : "",
-      token1: option.token1 ? option.token1.id : "",
-      text: option.name
-        ? ` ${option.symbol} ${option.name}`
-        : `${option.token0?.symbol}-${option.token1?.symbol}`,
-    };
-  })
+  const options = loading
+    ? []
+    : [
+        // ...pairs.slice(offset, limit),
+        // ...tokens.slice(offset, limit),
+        ...pairs,
+        ...tokens,
+      ].map((option) => {
+        return {
+          __typename: option.__typename,
+          id: option.id,
+          token0: option.token0 ? option.token0.id : "",
+          token1: option.token1 ? option.token1.id : "",
+          text: option.name
+            ? ` ${option.symbol} ${option.name}`
+            : `${option.token0?.symbol}-${option.token1?.symbol}`,
+        };
+      });
 
   return (
     <Autocomplete
+      loading={loading}
       id="search"
       style={{ width: "100%" }}
       disableListWrap
@@ -120,12 +126,7 @@ export default function Search({ pairs, tokens }) {
       })}
       groupBy={(option) => option.__typename}
       renderInput={(params) => (
-        <TextField
-          {...params}
-          label="Search"
-          variant="outlined"
-          size="small"
-        />
+        <TextField {...params} label="Search" variant="outlined" size="small" />
       )}
       getOptionLabel={(option) => option.text}
       renderOption={(option, { inputValue }) => {
@@ -133,16 +134,23 @@ export default function Search({ pairs, tokens }) {
         const parts = parse(option.text, matches);
         return (
           <Box display="flex" alignItems="center">
-            {option.__typename === "Token" ? <TokenIcon id={option.id} /> : <PairIcon base={option.token0} quote={option.token1} />}
+            {option.__typename === "Token" ? (
+              <TokenIcon id={option.id} />
+            ) : (
+              <PairIcon base={option.token0} quote={option.token1} />
+            )}
             {parts.map((part, index) => {
               return (
                 <span
                   key={index}
-                  style={{ fontWeight: part.highlight ? 700 : 400, whiteSpace: "pre-wrap" }}
+                  style={{
+                    fontWeight: part.highlight ? 700 : 400,
+                    whiteSpace: "pre-wrap",
+                  }}
                 >
                   {part.text}
                 </span>
-              )
+              );
             })}
           </Box>
         );

@@ -62,7 +62,7 @@ export const oneDayEthPriceQuery = gql`
 
 export const sevenDayEthPriceQuery = gql`
   query sevenDayEthPrice {
-    ethPrice @client
+    sevenDayPrice @client
   }
 `;
 

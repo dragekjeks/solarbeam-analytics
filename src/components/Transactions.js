@@ -13,56 +13,58 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export default function Transactions({ transactions, txCount }) {
+export default function Transactions({ transactions, txCount, loading = false }) {
   const classes = useStyles();
-  const rows = [
-    ...transactions.swaps,
-    ...transactions.mints,
-    ...transactions.burns,
-  ].map((transaction) => {
-    if (transaction.__typename === "Swap") {
-      return {
-        ...transaction,
-        amount0:
-          transaction.amount0In === "0"
-            ? transaction.amount1In
-            : transaction.amount0In,
-        amount1:
-          transaction.amount1Out === "0"
-            ? transaction.amount0Out
-            : transaction.amount1Out,
-      };
-    }
+  const rows = !transactions
+    ? []
+    : [...transactions.swaps, ...transactions.mints, ...transactions.burns].map(
+        (transaction) => {
+          if (transaction.__typename === "Swap") {
+            return {
+              ...transaction,
+              amount0:
+                transaction.amount0In === "0"
+                  ? transaction.amount1In
+                  : transaction.amount0In,
+              amount1:
+                transaction.amount1Out === "0"
+                  ? transaction.amount0Out
+                  : transaction.amount1Out,
+            };
+          }
 
-    return transaction;
-  });
+          return transaction;
+        }
+      );
 
   const now = new Date();
-
- 
 
   return (
     <div className={classes.root}>
       <SortableTable
         title="Transactions"
         orderBy="timestamp"
+        loading={loading}
         columns={[
           {
             key: "__typename",
             label: "Type",
-            render: (row) => { 
+            render: (row) => {
               return (
-              <Typography variant="body2" noWrap>
-                {row.__typename}{" "}
-                {row.amount0In === "0" || row.__typename === 'Mint' && !row.amount0In
-                  ? row.pair.token1.symbol
-                  : row.pair.token0.symbol}{" "}
-                for{" "}
-                {row.amount1Out === "0" || row.__typename === 'Mint' && !row.amount1Out
-                  ? row.pair.token0.symbol
-                  : row.pair.token1.symbol}
-              </Typography>
-            ) },
+                <Typography variant="body2" noWrap>
+                  {row.__typename}{" "}
+                  {row.amount0In === "0" ||
+                  (row.__typename === "Mint" && !row.amount0In)
+                    ? row.pair.token1.symbol
+                    : row.pair.token0.symbol}{" "}
+                  for{" "}
+                  {row.amount1Out === "0" ||
+                  (row.__typename === "Mint" && !row.amount1Out)
+                    ? row.pair.token0.symbol
+                    : row.pair.token1.symbol}
+                </Typography>
+              );
+            },
           },
           {
             key: "amountUSD",
@@ -100,7 +102,9 @@ export default function Transactions({ transactions, txCount }) {
             key: "to",
             label: "To",
             render: (row) => (
-              <Link href={`https://blockscout.moonriver.moonbeam.network/address/${row.to}`}>
+              <Link
+                href={`https://blockscout.moonriver.moonbeam.network/address/${row.to}`}
+              >
                 {row.to}
               </Link>
             ),

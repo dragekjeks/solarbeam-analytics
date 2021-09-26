@@ -5,6 +5,7 @@ import {
   makeStyles,
   useMediaQuery,
 } from "@material-ui/core";
+import { Skeleton } from "@material-ui/lab";
 import { timeFormat, timeParse } from "d3-time-format";
 
 import { useTheme } from "@material-ui/core/styles";
@@ -19,7 +20,7 @@ const useStyles = makeStyles((theme) => ({
     },
   },
 }));
-export default function ChartOverlay({ overlay, onTimespanChange }) {
+export default function ChartOverlay({ overlay, onTimespanChange, loading }) {
   const { title, value, date } = overlay;
   const theme = useTheme();
   const classes = useStyles();
@@ -27,52 +28,66 @@ export default function ChartOverlay({ overlay, onTimespanChange }) {
   return (
     <>
       <div style={{ position: "absolute", top: 24, left: 24 }}>
-        <Typography variant="subtitle2" color="textSecondary">
-          {title}
-        </Typography>
-        <Typography variant="h5" color="textPrimary">
-          {value}
-        </Typography>
-        <Typography variant="subtitle1" color="textSecondary">
-          {formatDate(date * 1e3)}
-        </Typography>
+        {loading ? (
+          <>
+            <Typography variant="subtitle2" color="textSecondary">
+              {title}
+            </Typography>
+            <Skeleton variant="text" width={150} height={30} />
+            <Skeleton variant="text" width={100} height={28} />
+          </>
+        ) : (
+          <>
+            <Typography variant="subtitle2" color="textSecondary">
+              {title}
+            </Typography>
+            <Typography variant="h5" color="textPrimary">
+              {value}
+            </Typography>
+            <Typography variant="subtitle1" color="textSecondary">
+              {formatDate(date * 1e3)}
+            </Typography>
+          </>
+        )}
       </div>
       <div style={{ position: "absolute", top: 20, right: 12 }}>
-        <div className={classes.filter}>
-          <Button
-            type="button"
-            value="1W"
-            aria-label="1 week timespan"
-            variant="text"
-            size="small"
-            color="primary"
-            onClick={onTimespanChange}
-          >
-            1W
-          </Button>
-          <Button
-            type="button"
-            value="1M"
-            aria-label="1 month timespan"
-            variant="text"
-            size="small"
-            color="primary"
-            onClick={onTimespanChange}
-          >
-            1M
-          </Button>
-          <Button
-            type="button"
-            value="ALL"
-            aria-label="ALL timespan"
-            variant="text"
-            size="small"
-            color="primary"
-            onClick={onTimespanChange}
-          >
-            ALL
-          </Button>
-        </div>
+        {!loading && (
+          <div className={classes.filter}>
+            <Button
+              type="button"
+              value="1W"
+              aria-label="1 week timespan"
+              variant="text"
+              size="small"
+              color="primary"
+              onClick={onTimespanChange}
+            >
+              1W
+            </Button>
+            <Button
+              type="button"
+              value="1M"
+              aria-label="1 month timespan"
+              variant="text"
+              size="small"
+              color="primary"
+              onClick={onTimespanChange}
+            >
+              1M
+            </Button>
+            <Button
+              type="button"
+              value="ALL"
+              aria-label="ALL timespan"
+              variant="text"
+              size="small"
+              color="primary"
+              onClick={onTimespanChange}
+            >
+              ALL
+            </Button>
+          </div>
+        )}
       </div>
     </>
   );

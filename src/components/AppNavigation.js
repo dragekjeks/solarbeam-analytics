@@ -106,7 +106,7 @@ export default function AppNavigation() {
           </List>
         </Collapse> */}
 
-        <ListItem button onClick={() => setOpenPair(!openPair)}>
+        {/* <ListItem button onClick={() => setOpenPair(!openPair)}>
           <ListItemText primary="Pairs" />
           {openPair ? <ExpandLess /> : <ExpandMore />}
         </ListItem>
@@ -146,7 +146,15 @@ export default function AppNavigation() {
               <ListItemText primary="Losers" />
             </ListItem>
           </List>
-        </Collapse>
+        </Collapse> */}
+        <ListItem
+          key="/pairs"
+          button
+          selected={router.pathname.includes("pairs")}
+          onClick={() => router.push("/pairs")}
+        >
+          <ListItemText primary="Pairs" />
+        </ListItem>
         <ListItem
           key="/tokens"
           button
