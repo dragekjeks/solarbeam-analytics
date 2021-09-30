@@ -25,6 +25,7 @@
     "autosuggest-highlight": "^3.1.1",
     "axios": "^0.21.4",
     "clsx": "latest",
+    "cors": "^2.8.5",
     "d3-array": "^2.8.0",
     "d3-time-format": "^3.0.0",
     "date-fns": "^2.16.1",
